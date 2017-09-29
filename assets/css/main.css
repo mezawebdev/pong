@@ -48,7 +48,13 @@ table {
   border-spacing: 0; }
 
 body {
-  background: rgba(0, 0, 0, 0.3); }
+  background: black; }
+
+.score {
+  text-align: center;
+  color: white;
+  padding-top: 30px;
+  font-size: 2.3em; }
 
 canvas {
   position: fixed;

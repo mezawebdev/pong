@@ -42,6 +42,10 @@
 			// Paddle (Player) 
 			this.canvasContext.fillStyle = paddle.background;
 			this.canvasContext.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+
+			// Paddle (AI)
+			this.canvasContext.fillStyle = paddle2.background;
+			this.canvasContext.fillRect(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
 		},
 		calculateMousePosition: function(event) {
 			var canvasRectangle = canvas.canvasElement.getBoundingClientRect();
@@ -56,6 +60,7 @@
 	}
 
 	var paddle = {
+		score: 0,
 		width: 20,
 		height: 100,
 		x: 10,
@@ -65,8 +70,11 @@
 		moveInterval: null,
 		moving: false,
 		collision: false,
-		render: function() {
-			
+		init: function() {
+			this.cacheDOM();
+		},
+		cacheDOM: function() {
+			this.DOMelement = document.getElementsByClassName("score-1")[0];
 		},
 		move: function(direction) {
 			switch (direction) {
@@ -86,6 +94,50 @@
 				paddle.background = "white";
 				canvas.render();
 			}, 200);
+		},
+		updateScore: function() {
+			this.DOMelement.innerHTML = this.score;
+		}
+	}
+
+	var paddle2 = {
+		score: 0,
+		width: 20,
+		height: 100,
+		x: 870,
+		y: 200,
+		speed: 5,
+		background: "white",
+		moveInterval: null,
+		moving: false,
+		collision: false,
+		init: function() {
+			this.cacheDOM();
+			this.ai();
+		},
+		cacheDOM: function() {
+			this.DOMelement = document.getElementsByClassName("score-2")[0];
+		},
+		highlight: function() {
+			this.background = "yellow";
+			canvas.render();
+			setTimeout(function() {
+				paddle2.background = "white";
+				canvas.render();
+			}, 200);
+		},
+		ai: function() {
+			this.moveInterval = setInterval(function() {
+				if (ball.y < paddle2.y + 50) {
+					paddle2.y -= paddle2.speed;
+				} else if (ball.y > paddle2.y + (paddle2.height - 50)) {
+					paddle2.y += paddle2.speed;
+				}
+				canvas.render();
+			}, 1000 / canvas.framesPerSecond);
+		},
+		updateScore: function() {
+			this.DOMelement.innerHTML = this.score;
 		}
 	}
 
@@ -99,9 +151,19 @@
 		speedY: 5,
 		background: "white",
 		moveInterval: null,
+		spawnDelay: 1000,
 		init: function() {
 			this.moveInterval = setInterval(function() {
 				ball.move();
+				if (ball.x < 0) {
+					ball.reset();
+					paddle2.score++;
+					paddle2.updateScore();
+				} else if (ball.x > canvas.width) {
+					ball.reset();
+					paddle.score++;
+					paddle.updateScore();
+				}
 			}, 1000 / canvas.framesPerSecond);
 		},
 		move: function() {
@@ -111,11 +173,6 @@
 			// Y Axis Collision
 			if (this.x > canvas.width - ball.width + 10) {
 				this.speedX = -this.speedX;
-
-			// Paddle Collision
-			} else if (this.x < paddle.width + paddle.x && this.y > paddle.y && this.y < paddle.y + paddle.height) {
-				this.speedX = -this.speedX;
-				paddle.highlight();
 			}
 
 			// X Axis Collision
@@ -124,8 +181,37 @@
 			} else if (this.y < 0) {
 				this.speedY = -this.speedY;
 			}
+
+			// Paddle 1 Collision
+			if (this.x < paddle.width + paddle.x && this.y > paddle.y && this.y < paddle.y + paddle.height) {
+				this.speedX = -this.speedX;
+				this.collision();
+				paddle.highlight();
+			}
+
+			// Paddle 2 Collision
+			if (this.x > paddle2.x && this.y > paddle2.y  && this.y < paddle2.y + paddle2.height) {
+				this.speedX = -this.speedX;
+				this.collision();
+				paddle2.highlight();
+			}
+
 			canvas.render();
-		}	
+		},
+		collision: function() {
+			this.speedY += 1;
+			this.speedX += 1;
+		},
+		reset: function() {
+			this.x = canvas.width / 2;
+			this.y = canvas.height / 2;
+			this.speedY = 5;
+			this.speedX = 5;
+			clearInterval(this.moveInterval);
+			setTimeout(function() {
+				ball.init();
+			}, this.spawnDelay);
+		}
 	}
 
 	//------------
@@ -133,6 +219,8 @@
 	//------------
 	canvas.init();
 	ball.init();
+	paddle.init();
+	paddle2.init();
 
 	//------------
 	//   Events
@@ -176,7 +264,7 @@
 	});
 
 
-	// Mouse detection
+	// On Mouse Move
 	canvas.canvasElement.addEventListener("mousemove", function(e) {
 		var mousePos = canvas.calculateMousePosition(e);
 		paddle.y = mousePos.y - (paddle.height / 2);

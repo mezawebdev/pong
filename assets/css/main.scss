@@ -13,7 +13,14 @@
 @import "_mixins.scss";
 
 body {
-	background: rgba(0, 0, 0, 0.3);
+	background: rgba(0, 0, 0, 1);
+}
+
+.score {
+	text-align: center;
+	color: white;
+	padding-top: 30px;
+	font-size: 2.3em;
 }
 
 canvas {
